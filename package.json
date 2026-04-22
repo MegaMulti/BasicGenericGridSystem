@@ -1,7 +1,7 @@
 {
-  "name": "com.megamulti.grid",
+  "name": "com.megamulti.genericgrid",
   "version": "1.0.0",
-  "displayName": "MegaMulti Grid",
+  "displayName": "MegaMulti Generic Grid",
   "description": "Generic Grid For Unity",
   "unity": "2021.3",
   "author": {
