@@ -1,2 +1,2 @@
-# MegaMulti.Grid
-Generic Grid for Uniity
+# BasicGenericGridSystem
+Basic Generic Grid For Unity
