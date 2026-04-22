@@ -12,6 +12,7 @@ namespace MegaMulti.BasicGenericGridSystem
 		private readonly Vector3 offset;
 
 		private readonly Dictionary<Vector2Int, T> cells;
+		private readonly Dictionary<T, Vector2Int> reverseCells;
 
 		public GenGrid(int maxWidth = 0, int maxHeight = 0, Vector2 cellSize = default, Vector3 offset = default)
 		{
@@ -27,6 +28,7 @@ namespace MegaMulti.BasicGenericGridSystem
 			this.offset = offset;
 
 			cells = new Dictionary<Vector2Int, T>();
+			reverseCells = new Dictionary<T, Vector2Int>();
 		}
 
 		#region Helpers
@@ -60,6 +62,9 @@ namespace MegaMulti.BasicGenericGridSystem
 			return true;
 		}
 
+		public bool TryGetWorldPosition(Vector2Int gridPosition, out Vector3 worldPosition) =>
+			TryGetWorldPosition(gridPosition.x, gridPosition.y, out worldPosition);
+
 		public bool TryGetGridPosition(Vector3 worldPosition, out Vector2Int gridPosition)
 		{
 			if (!IsPositionValid(worldPosition))
@@ -71,15 +76,32 @@ namespace MegaMulti.BasicGenericGridSystem
 			gridPosition = CalculateGridPosition(worldPosition, cellSize, offset);
 			return true;
 		}
+
+		public bool TryGetGridPosition(T value, out Vector2Int gridPosition) =>
+			return reverseCells.TryGetValue(value, out gridPosition);
 		
 		public bool TrySet(int x, int y, T value)
 		{
 			if (!IsPositionValid(x, y))
-			{
 				return false;
+
+			var pos = new Vector2Int(x, y);
+
+			// If something already exists at this position, remove old reverse mapping
+			if (cells.TryGetValue(pos, out T oldValue))
+			{
+				reverseCells.Remove(oldValue);
 			}
 
-			cells[new Vector2Int(x, y)] = value;
+			// If the value already exists somewhere else, remove its old position
+			if (reverseCells.TryGetValue(value, out Vector2Int oldPos))
+			{
+				cells.Remove(oldPos);
+			}
+
+			cells[pos] = value;
+			reverseCells[value] = pos;
+
 			return true;
 		}
 		
@@ -109,11 +131,17 @@ namespace MegaMulti.BasicGenericGridSystem
 		public bool TryRemove(int x, int y)
 		{
 			if (!IsPositionValid(x, y))
-			{
 				return false;
-			}
 
-			return cells.Remove(new Vector2Int(x, y));
+			var pos = new Vector2Int(x, y);
+
+			if (!cells.TryGetValue(pos, out T value))
+				return false;
+
+			cells.Remove(pos);
+			reverseCells.Remove(value);
+
+			return true;
 		}
 
 		public bool TryRemove(Vector3 worldPosition) =>
@@ -162,7 +190,11 @@ namespace MegaMulti.BasicGenericGridSystem
 
 		public IEnumerable<T> GetAllCells() => cells.Values;
 
-		public void Clear() => cells.Clear();
+		public void Clear()
+		{
+			cells.Clear();
+			reverseCells.Clear();
+		}
 
 		#endregion
 	}
